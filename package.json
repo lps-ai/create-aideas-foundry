@@ -20,6 +20,7 @@
     "giget": "^3.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20.19.39",
     "tsup": "^8.4.0",
     "typescript": "^5.9.0"
   },
