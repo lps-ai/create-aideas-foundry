@@ -16,7 +16,7 @@ const main = defineCommand({
   meta: {
     name: "create-foundry",
     version: "0.1.0",
-    description: "Create a new Aideas Foundry SaaS project",
+    description: "Create a new Foundry AI SaaS project",
   },
   args: {
     name: {
@@ -40,10 +40,10 @@ const main = defineCommand({
       process.exit(1)
     }
 
-    consola.box("Aideas Foundry — SaaS Starter Kit")
+    consola.box("Foundry — AI SaaS Starter Kit")
 
     // 1. Download template
-    consola.start("Downloading Aideas Foundry template...")
+    consola.start("Downloading Foundry template...")
     try {
       await downloadTemplate(targetDir)
       consola.success("Template downloaded")
@@ -83,7 +83,7 @@ const main = defineCommand({
       spawnSync("git", ["add", "-A"], { cwd: targetDir, stdio: "pipe" })
       const gitCommit = spawnSync(
         "git",
-        ["commit", "-m", "Initial commit from Aideas Foundry"],
+        ["commit", "-m", "Initial commit from Foundry"],
         { cwd: targetDir, stdio: "pipe" },
       )
       if (gitCommit.status === 0) {
@@ -101,12 +101,12 @@ const main = defineCommand({
     // 6. Print next steps
     console.log("")
     consola.box(
-      `Done! Your Aideas Foundry project "${projectName}" is ready.\n\n` +
+      `Done! Your Foundry project "${projectName}" is ready.\n\n` +
         `Next steps:\n` +
         `  cd ${projectName}\n` +
         `  cp .env.example .env        # Edit with your settings\n` +
         `  pnpm services:up            # Start Postgres, Redis, etc.\n` +
-        `  pnpm db:push && pnpm db:seed\n` +
+        `  pnpm db:migrate && pnpm db:seed\n` +
         `  pnpm dev                    # Start dev server`,
     )
   },

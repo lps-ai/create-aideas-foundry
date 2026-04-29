@@ -1,6 +1,6 @@
 # create-foundry
 
-Create new Aideas Foundry SaaS projects from the command line.
+Create new Foundry AI SaaS projects from the command line.
 
 ## Usage
 
@@ -18,7 +18,7 @@ npm create foundry my-app
 
 ## What it does
 
-1. Downloads the Aideas Foundry monorepo template from GitHub
+1. Downloads the Foundry monorepo template from GitHub
 2. Renames the project to your chosen name
 3. Removes template-specific files (CI config, docs, etc.)
 4. Installs dependencies via pnpm
@@ -27,7 +27,7 @@ npm create foundry my-app
 
 ## Authentication
 
-The Aideas Foundry template is a private repository. The CLI detects your GitHub token automatically:
+The Foundry template is a private repository. The CLI detects your GitHub token automatically:
 
 1. **`GITHUB_TOKEN`** or **`GH_TOKEN`** environment variable (for CI)
 2. **`gh auth token`** from the GitHub CLI (for local dev)
@@ -38,7 +38,7 @@ The Aideas Foundry template is a private repository. The CLI detects your GitHub
 cd my-app
 cp .env.example .env        # Edit with your settings
 pnpm services:up            # Start Postgres, Redis, etc.
-pnpm db:push && pnpm db:seed
+pnpm db:migrate && pnpm db:seed
 pnpm dev                    # Start dev server
 ```
 

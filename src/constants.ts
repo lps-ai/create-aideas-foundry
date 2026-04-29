@@ -1,4 +1,4 @@
-export const TEMPLATE_REPO = "github:lps-ai/aideas-foundry"
+export const TEMPLATE_REPO = "github:lps-ai/foundry"
 
 export const FILES_TO_REMOVE = [
   // CI/automation (belongs to template repo, not user's project)
@@ -7,6 +7,7 @@ export const FILES_TO_REMOVE = [
   ".gitleaks.toml",
   ".gitleaksignore",
   "lighthouserc.json",
+  ".graphifyignore",
 
   // AI agent config (template-specific)
   "AGENTS.md",

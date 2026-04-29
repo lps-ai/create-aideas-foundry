@@ -14,7 +14,7 @@ export function getGitHubToken(): string {
   } catch {
     throw new Error(
       "GitHub authentication required.\n" +
-        "Aideas Foundry needs access to the private template repository.\n\n" +
+        "Foundry needs access to the private template repository.\n\n" +
         "Option 1: Run 'gh auth login' (recommended)\n" +
         "Option 2: Set GITHUB_TOKEN environment variable",
     )
