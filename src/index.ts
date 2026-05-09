@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from "citty"
 import { spawnSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import consola from "consola"
 import {
@@ -8,14 +9,25 @@ import {
   checkPnpmAvailable,
   checkGitAvailable,
 } from "./utils/preflight.js"
-import { downloadTemplate } from "./utils/template.js"
+import { downloadFoundryTemplate } from "./utils/template.js"
 import { cleanupTemplateFiles } from "./utils/cleanup.js"
 import { renameProject } from "./utils/rename.js"
+
+function readPackageVersion(): string {
+  try {
+    const packageJson = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+    ) as { version?: unknown }
+    return typeof packageJson.version === "string" ? packageJson.version : "0.0.0"
+  } catch {
+    return "0.0.0"
+  }
+}
 
 const main = defineCommand({
   meta: {
     name: "create-foundry",
-    version: "0.1.0",
+    version: readPackageVersion(),
     description: "Create a new Foundry AI SaaS project",
   },
   args: {
@@ -45,7 +57,7 @@ const main = defineCommand({
     // 1. Download template
     consola.start("Downloading Foundry template...")
     try {
-      await downloadTemplate(targetDir)
+      await downloadFoundryTemplate(targetDir)
       consola.success("Template downloaded")
     } catch (error) {
       consola.error("Failed to download template:", (error as Error).message)
@@ -107,6 +119,7 @@ const main = defineCommand({
         `  cp .env.example .env        # Edit with your settings\n` +
         `  pnpm services:up            # Start Postgres, Redis, etc.\n` +
         `  pnpm db:migrate && pnpm db:seed\n` +
+        `  pnpm run build              # Build all packages and apps\n` +
         `  pnpm dev                    # Start dev server`,
     )
   },

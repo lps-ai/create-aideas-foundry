@@ -1,20 +1,28 @@
 import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-function replaceValue(source: string, key: string, value: string): string {
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error
+}
+
+function replaceConfigValue(source: string, key: string, value: string): string {
   const pattern = new RegExp(`(\\b${key}:\\s*")([^"]*?)(")`)
   return source.replace(pattern, `$1${value}$3`)
 }
 
-async function replaceFileValues(
+async function updateTextFileIfExists(
   filePath: string,
-  replacements: Array<[RegExp | string, string]>,
+  update: (content: string) => string,
 ): Promise<void> {
-  let contents = await readFile(filePath, "utf-8")
-  for (const [pattern, replacement] of replacements) {
-    contents = contents.replace(pattern, replacement)
+  try {
+    const content = await readFile(filePath, "utf-8")
+    await writeFile(filePath, update(content))
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return
+    }
+    throw error
   }
-  await writeFile(filePath, contents)
 }
 
 export async function renameProject(
@@ -27,51 +35,57 @@ export async function renameProject(
   pkg.name = projectName
   await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n")
 
-  // 2. Update app.config.ts — both app.name and email.fromName
+  // 2. Update app.config.ts identity and email defaults
   const configPath = join(projectDir, "app.config.ts")
   let config = await readFile(configPath, "utf-8")
 
-  config = replaceValue(config, "name", projectName)
-  config = replaceValue(config, "legalName", `${projectName}, Inc.`)
-  config = replaceValue(config, "supportEmail", "support@example.com")
-  config = replaceValue(config, "fromName", projectName)
-  config = replaceValue(config, "fromAddress", "noreply@example.com")
+  config = replaceConfigValue(config, "name", projectName)
+  config = replaceConfigValue(config, "legalName", `${projectName}, Inc.`)
+  config = replaceConfigValue(config, "supportEmail", "support@example.com")
+  config = replaceConfigValue(config, "fromName", projectName)
+  config = replaceConfigValue(config, "fromAddress", "noreply@example.com")
 
   await writeFile(configPath, config)
 
-  // 3. Update local service defaults that carry the template repository name
-  await replaceFileValues(join(projectDir, ".env.example"), [
-    [
-      /^DATABASE_URL=.*$/m,
-      `DATABASE_URL=postgresql://${projectName}:${projectName}@localhost:5432/${projectName}`,
-    ],
-    [/^MAIL_FROM=.*$/m, `MAIL_FROM=${projectName} <noreply@example.com>`],
-    [/^S3_ACCESS_KEY=.*$/m, `S3_ACCESS_KEY=${projectName}`],
-    [/^S3_SECRET_KEY=.*$/m, `S3_SECRET_KEY=${projectName}-secret`],
-    [/^S3_BUCKET=.*$/m, `S3_BUCKET=${projectName}`],
-  ])
+  // 3. Update environment and local service defaults
+  const envExamplePath = join(projectDir, ".env.example")
+  await updateTextFileIfExists(envExamplePath, (envExample) =>
+    envExample
+      .replace(
+        /^DATABASE_URL=.*/m,
+        `DATABASE_URL=postgresql://${projectName}:${projectName}@localhost:5432/${projectName}`,
+      )
+      .replace(/^MAIL_FROM=.*/m, `MAIL_FROM=${projectName} <noreply@example.com>`)
+      .replace(/^S3_ACCESS_KEY=.*/m, `S3_ACCESS_KEY=${projectName}`)
+      .replace(/^S3_SECRET_KEY=.*/m, `S3_SECRET_KEY=${projectName}-secret`)
+      .replace(/^S3_BUCKET=.*/m, `S3_BUCKET=${projectName}`),
+  )
 
-  await replaceFileValues(join(projectDir, "docker-compose.yml"), [
-    [/container_name: foundry-/g, `container_name: ${projectName}-`],
-    [/POSTGRES_USER: foundry/g, `POSTGRES_USER: ${projectName}`],
-    [/POSTGRES_PASSWORD: foundry/g, `POSTGRES_PASSWORD: ${projectName}`],
-    [/POSTGRES_DB: foundry/g, `POSTGRES_DB: ${projectName}`],
-    [/pg_isready -U foundry/g, `pg_isready -U ${projectName}`],
-    [
-      /postgresql:\/\/foundry:foundry@postgres:5432/g,
-      `postgresql://${projectName}:${projectName}@postgres:5432`,
-    ],
-    [/foundry-dev-jwt-secret/g, `${projectName}-dev-jwt-secret`],
-    [/MINIO_ROOT_USER: foundry/g, `MINIO_ROOT_USER: ${projectName}`],
-    [
-      /MINIO_ROOT_PASSWORD: foundry-secret/g,
-      `MINIO_ROOT_PASSWORD: ${projectName}-secret`,
-    ],
-    [
-      /DEFAULT_FROM_EMAIL: noreply@foundry.dev/g,
-      "DEFAULT_FROM_EMAIL: noreply@example.com",
-    ],
-  ])
+  for (const composeFile of ["docker-compose.yml", "docker-compose.yaml"]) {
+    const composePath = join(projectDir, composeFile)
+    await updateTextFileIfExists(composePath, (compose) =>
+      compose
+        .replaceAll("foundry", projectName)
+        .replaceAll(`noreply@${projectName}.dev`, "noreply@example.com"),
+    )
+  }
+
+  const storageEnvPath = join(projectDir, "packages/storage/src/env.ts")
+  await updateTextFileIfExists(storageEnvPath, (storageEnv) =>
+    storageEnv
+      .replace(
+        /S3_ACCESS_KEY:\s*z\.string\(\)\.default\("[^"]*"\)/,
+        `S3_ACCESS_KEY: z.string().default("${projectName}")`,
+      )
+      .replace(
+        /S3_SECRET_KEY:\s*z\.string\(\)\.default\("[^"]*"\)/,
+        `S3_SECRET_KEY: z.string().default("${projectName}-secret")`,
+      )
+      .replace(
+        /S3_BUCKET:\s*z\.string\(\)\.default\("[^"]*"\)/,
+        `S3_BUCKET: z.string().default("${projectName}")`,
+      ),
+  )
 
   // 4. Generate a clean README.md for the new project
   const readmePath = join(projectDir, "README.md")
@@ -85,6 +99,7 @@ Built with [Foundry](https://github.com/lps-ai/foundry) — an opinionated AI Sa
 cp .env.example .env        # Edit with your settings
 pnpm services:up            # Start Postgres, Redis, etc.
 pnpm db:migrate && pnpm db:seed
+pnpm run build              # Build all packages and apps
 pnpm dev                    # Start dev server
 \`\`\`
 
