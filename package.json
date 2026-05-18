@@ -1,18 +1,18 @@
 {
-  "name": "create-foundry",
+  "name": "create-lps-foundry",
   "version": "0.1.5",
   "description": "Create new Foundry AI SaaS projects",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lps-ai/create-foundry.git"
+    "url": "git+https://github.com/lps-ai/create-lps-foundry.git"
   },
   "bugs": {
-    "url": "https://github.com/lps-ai/create-foundry/issues"
+    "url": "https://github.com/lps-ai/create-lps-foundry/issues"
   },
-  "homepage": "https://github.com/lps-ai/create-foundry#readme",
+  "homepage": "https://github.com/lps-ai/create-lps-foundry#readme",
   "bin": {
-    "create-foundry": "./dist/index.js"
+    "create-lps-foundry": "./dist/index.js"
   },
   "files": [
     "dist"

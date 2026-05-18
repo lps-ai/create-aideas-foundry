@@ -26,7 +26,7 @@ function readPackageVersion(): string {
 
 const main = defineCommand({
   meta: {
-    name: "create-foundry",
+    name: "create-lps-foundry",
     version: readPackageVersion(),
     description: "Create a new Foundry AI SaaS project",
   },

@@ -1,13 +1,13 @@
-# create-foundry
+# create-lps-foundry
 
 Create new Foundry AI SaaS projects from the command line.
 
 ## Usage
 
 ```bash
-npx create-foundry my-app
+npx create-lps-foundry my-app
 # or
-npm create foundry my-app
+npm create lps-foundry my-app
 ```
 
 ## Prerequisites
